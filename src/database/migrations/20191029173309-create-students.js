@@ -16,16 +16,24 @@ module.exports = {
         allowNull: false,
         unique: true,
       },
-      idade: {
+      age: {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
-      peso: {
+      weight: {
         type: Sequelize.FLOAT,
         allowNull: false,
       },
-      altura: {
+      height: {
         type: Sequelize.FLOAT,
+        allowNull: false,
+      },
+      created_at: {
+        type: Sequelize.DATE,
+        allowNull: false,
+      },
+      updated_at: {
+        type: Sequelize.DATE,
         allowNull: false,
       },
     });
