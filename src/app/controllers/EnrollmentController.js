@@ -1,8 +1,11 @@
 import * as Yup from 'yup';
-import { addMonths, parseISO } from 'date-fns';
+import { addMonths, parseISO, format } from 'date-fns';
+import pt from 'date-fns/locale/pt';
 import Enrollment from '../models/Enrollment';
 import User from '../models/User';
 import Plan from '../models/Plan';
+import Mail from '../../lib/Mail';
+import Student from '../models/Student';
 
 class EnrollmentController {
   async store(req, res) {
@@ -29,10 +32,15 @@ class EnrollmentController {
 
     const { plan_id, start_date } = req.body;
 
-    const { duration, price } = await Plan.findByPk(plan_id);
+    const { duration, price, title } = await Plan.findByPk(plan_id);
 
-    req.body.end_date = addMonths(parseISO(start_date), duration);
-    req.body.price = price * duration;
+    const fPrice = price * duration;
+
+    const endDate = addMonths(parseISO(start_date), duration);
+
+    req.body.end_date = endDate;
+
+    req.body.price = fPrice;
 
     const {
       id,
@@ -40,6 +48,26 @@ class EnrollmentController {
       end_date,
       price: fullPrice,
     } = await Enrollment.create(req.body);
+
+    const { name, email } = await Student.findByPk(student_id);
+
+    await Mail.sendMail({
+      to: `${name} <${email}>`,
+      subject: 'Matrícula GymPoint',
+      template: 'enrollment',
+      context: {
+        user: name,
+        plan: title,
+        duration,
+        price: fPrice,
+        startDate: format(parseISO(start_date), "'dia' dd 'de' MMM yyyy'", {
+          locale: pt,
+        }),
+        endDate: format(endDate, "'dia' dd 'de' MMM yyyy'", {
+          locale: pt,
+        }),
+      },
+    });
 
     return res.json({
       id,
