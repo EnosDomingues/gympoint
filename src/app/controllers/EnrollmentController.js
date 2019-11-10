@@ -107,11 +107,11 @@ class EnrollmentController {
 
   async update(req, res) {
     const schema = Yup.object().shape({
-      student_id: Yup.number().required(),
-      pland_id: Yup.number().required(),
-      start_date: Yup.date().required(),
-      end_date: Yup.date().required(),
-      price: Yup.number().required(),
+      student_id: Yup.number(),
+      pland_id: Yup.number(),
+      start_date: Yup.date(),
+      end_date: Yup.date(),
+      price: Yup.number(),
     });
 
     if (!(await schema.isValid(req.body))) {
@@ -143,6 +143,38 @@ class EnrollmentController {
       end_date,
       price,
     } = await enrollment.update(req.body);
+
+    return res.json({ id, student_id, pland_id, start_date, end_date, price });
+  }
+
+  async delete(req, res) {
+    /**
+     * check if the logged user is an admin
+     */
+    const checkIsAdmin = await User.findOne({
+      where: { id: req.userId, admin: true },
+    });
+
+    if (!checkIsAdmin) {
+      return res.status(400).json({ error: 'You dont have permission' });
+    }
+
+    const enrollment = await Enrollment.findByPk(req.params.id);
+
+    if (!enrollment) {
+      return res.status(400).json({ error: 'Enrollment does not exist' });
+    }
+
+    const {
+      id,
+      student_id,
+      pland_id,
+      start_date,
+      end_date,
+      price,
+    } = enrollment;
+
+    enrollment.destroy();
 
     return res.json({ id, student_id, pland_id, start_date, end_date, price });
   }
